@@ -16,27 +16,62 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
-        var isFirstTime = localStorage.getItem('isFirst');
-        if(!isFirstTime){
-            setOpen(true);
-            localStorage.setItem('isFirst', true);
-        } else {
-          setOpen(false);
-        }
+    var isFirstTime = localStorage.getItem('isFirst');
+    if (!isFirstTime) {
+      setOpen(true);
+      localStorage.setItem('isFirst', true);
+    } else {
+      setOpen(false);
+    }
   }, [])
 
 
+  // async function handleButtonClick(text = '') {
+  //   setIsGenerating(true);
+  //   const loc = await getCurrentLocation();
+  //   const area = loc.area;
+  //   const city = loc.city;
+
+  //   try {
+  //     // ✅ disable button and show generating
+
+  //     const payload = {
+  //       service: text != '' ? text : input,
+  //       location: `${area}, ${city}`,
+  //     };
+
+  //     const res = await fetch("/api/ask", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(payload),
+  //     });
+
+  //     if (!res.ok) throw new Error("API failed");
+
+  //     const data = await res.json();
+  //     setResult(data.result)
+  //   } catch (error) {
+  //     console.error(error);
+  //     setIsGenerating(false);
+  //   } finally {
+  //     setIsGenerating(false); // ✅ enable button again
+  //   }
+  // }
+
   async function handleButtonClick(text = '') {
     setIsGenerating(true);
-    const loc = await getCurrentLocation();
-    const area = loc.area;
-    const city = loc.city;
 
     try {
-      // ✅ disable button and show generating
+      // Start getting location, but don't "await" it yet if you want to be safe
+      // Or better: wrap it in a timeout so it doesn't hang Safari
+      const locationPromise = getCurrentLocation().catch(() => ({ area: 'Unknown', city: 'Unknown' }));
+
+      const loc = await locationPromise;
+      const area = loc?.area || 'Unknown';
+      const city = loc?.city || 'Unknown';
 
       const payload = {
-        service: text != '' ? text : input,
+        service: text !== '' ? text : input,
         location: `${area}, ${city}`,
       };
 
@@ -49,12 +84,11 @@ export default function Home() {
       if (!res.ok) throw new Error("API failed");
 
       const data = await res.json();
-      setResult(data.result)
+      setResult(data.result);
     } catch (error) {
-      console.error(error);
-      setIsGenerating(false);
+      console.error("Safari Error:", error);
     } finally {
-      setIsGenerating(false); // ✅ enable button again
+      setIsGenerating(false);
     }
   }
 
